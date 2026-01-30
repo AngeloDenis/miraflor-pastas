@@ -216,9 +216,10 @@ function confirmOrder() {
       msg += `${cart[k].q} x ${k}%0A`;
     }
 
-    msg += `%0ATotal: $${total}%0A%0AGracias por tu pedido 🙌`;
+    msg += `%0ATotal: $${total}%0A%0A`;
+    msg += "Gracias por tu pedido 🙌 En breve te respondemos.";
 
-    window.open("https://wa.me/5493406519939?text=" + msg, "_blank");
+    window.location.href = "https://wa.me/5493406519939?text=" + msg;
   }
 }
 
