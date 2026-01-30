@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miraflor Pastas</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#f7f7f7;
+  padding:15px;
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 8px;
+}
+.logo img {
+  max-width: 180px;
+  width: 100%;
+  height: auto;
+}
+
+h1 {
+  text-align:center;
+  margin:5px 0 10px;
+}
+
+.product {
+  background:#ffffff;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+button {
+  background: #2e7d32;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+#cart {
+  background:#ffffff;
+  padding:15px;
+  border-radius:8px;
+  margin-top:20px;
+}
+
+input, textarea, select {
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+  margin-bottom:12px;
+  font-size:15px;
+}
+
+.send {
+  background: #1fa855;
+  width:100%;
+  font-size:18px;
+  padding:12px;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="logo">
+  <img src="logo.png" alt="Miraflor Pastas">
+</div>
+
+<h1>🍝 Pastas artesanales</h1>
+
+<p style="text-align:center; font-size:15px;">
+<b>📦 Envíos a partir de 10 unidades</b><br>
+🏪 Retiro en fábrica: Estrada 5670
+</p>
+
+<div id="products"></div>
+
+<div id="cart">
+<h2>🛒 Carrito</h2>
+<div id="cartItems"></div>
+
+<label>Nombre</label>
+<input id="name" required>
+
+<label>Teléfono</label>
+<input id="phone" required>
+
+<label>Entrega</label>
+<select id="delivery" onchange="toggleAddress()">
+<option value="">Seleccionar</option>
+<option value="Envío">Envío</option>
+<option value="Retiro en fábrica">Retiro en fábrica</option>
+</select>
+
+<div id="addressBox" style="display:none;">
+<label>Dirección completa</label>
+<textarea id="address"></textarea>
+</div>
+
+<button class="send" onclick="sendWhatsApp()">Enviar pedido por WhatsApp</button>
+</div>
+
+<script>
+const products = [
+{name:"Fideos 500g", price:1500},
+{name:"Empanadas 300g", price:1000},
+{name:"Empanadas 400g", price:1200},
+{name:"Rotiseros", price:1300},
+{name:"Árabes", price:1500},
+{name:"Copetín", price:1400},
+{name:"Tartas 300g", price:1100},
+{name:"Tartas 400g", price:1300},
+{name:"Pastelitos 8x8", price:1200},
+{name:"Pastelon 10x10", price:1500}
+];
+
+let cart = {};
+
+function renderProducts(){
+let html="";
+products.forEach(p=>{
+html+=`<div class="product">
+<span>${p.name} - $${p.price}</span>
+<button onclick="add('${p.name}',${p.price})">Agregar</button>
+</div>`;
+});
+document.getElementById("products").innerHTML=html;
+}
+
+function add(name,price){
+if(!cart[name]) cart[name]={qty:0,price};
+cart[name].qty++;
+renderCart();
+}
+
+function renderCart(){
+let html="";
+let total=0, units=0;
+for(let i in cart){
+html+=`${cart[i].qty} x ${i} - $${cart[i].qty*cart[i].price}<br>`;
+total+=cart[i].qty*cart[i].price;
+units+=cart[i].qty;
+}
+html+=`<hr><b>Total: $${total}</b>`;
+document.getElementById("cartItems").innerHTML=html;
+cart.units=units;
+cart.total=total;
+}
+
+function toggleAddress(){
+document.getElementById("addressBox").style.display =
+document.getElementById("delivery").value==="Envío" ? "block":"none";
+}
+
+function sendWhatsApp(){
+if(cart.units < 10 && document.getElementById("delivery").value==="Envío"){
+alert("El envío es a partir de 10 unidades");
+return;
+}
+
+let msg="🧾 *Nuevo pedido*%0A";
+msg+="Nombre: "+name.value+"%0A";
+msg+="Tel: "+phone.value+"%0A%0A";
+msg+="Entrega: "+delivery.value+"%0A";
+if(delivery.value==="Envío") msg+="Dirección: "+address.value+"%0A%0A";
+
+for(let i in cart){
+if(i!="units" && i!="total")
+msg+=`${cart[i].qty} x ${i}%0A`;
+}
+msg+=`%0ATotal: $${cart.total}`;
+
+window.open(`https://wa.me/5493406519939?text=${msg}`,"_blank");
+}
+
+renderProducts();
+</script>
+
+</body>
+</html>
