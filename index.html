@@ -17,8 +17,9 @@ body { font-family: Arial, sans-serif; background:#f6f6f6; padding:15px; }
 }
 
 button {
-  background:#2e7d32; color:white; border:none;
-  padding:6px 10px; border-radius:6px; cursor:pointer;
+  background:#2e7d32; color:white;
+  border:none; padding:6px 10px;
+  border-radius:6px; cursor:pointer;
 }
 
 .remove { background:#c62828; margin-left:8px; }
@@ -103,7 +104,7 @@ function renderProducts() {
       </div>
     `;
   });
-  productsDiv.innerHTML = html;
+  document.getElementById("products").innerHTML = html;
 }
 
 function add(i) {
@@ -127,6 +128,7 @@ function clearCart() {
 
 function renderCart() {
   let html="", total=0, units=0;
+
   for (let k in cart) {
     html += `
       ${cart[k].q} x ${k} - $${cart[k].q * cart[k].price}
@@ -136,12 +138,10 @@ function renderCart() {
     units += cart[k].q;
   }
 
-  cartItems.innerHTML = html === "" 
-    ? "<i>El carrito está vacío</i>"
-    : html + `<hr><b>Total: $${total}</b>`;
+  document.getElementById("cartItems").innerHTML =
+    html === "" ? "<i>El carrito está vacío</i>" : html + `<hr><b>Total: $${total}</b>`;
 
-  cart.total = total;
-  cart.units = units;
+  return { total, units };
 }
 
 function toggleAddress() {
@@ -149,28 +149,29 @@ function toggleAddress() {
 }
 
 function confirmOrder() {
-  if (delivery.value === "Envío" && cart.units < 10) {
+  const nameVal = name.value.trim();
+  const phoneVal = phone.value.trim();
+  if (!nameVal || !phoneVal) {
+    alert("Por favor completá nombre y teléfono");
+    return;
+  }
+
+  const { total, units } = renderCart();
+
+  if (delivery.value === "Envío" && units < 10) {
     alert("El envío es a partir de 10 unidades");
     return;
   }
 
   let resumen = "CONFIRMAR PEDIDO\n\n";
-  for (let k in cart) {
-    resumen += `${cart[k].q} x ${k}\n`;
-  }
-  resumen += `\nTotal: $${cart.total}\n`;
-  resumen += `Entrega: ${delivery.value}\n`;
+  for (let k in cart) resumen += `${cart[k].q} x ${k}\n`;
+  resumen += `\nTotal: $${total}\nEntrega: ${delivery.value}\n`;
+  if (delivery.value === "Envío") resumen += `Dirección: ${address.value}\n`;
 
-  if (delivery.value === "Envío") {
-    resumen += `Dirección: ${address.value}\n`;
-  }
-
-  if (confirm(resumen)) {
-    sendWhatsApp();
-  }
+  if (confirm(resumen)) sendWhatsApp(total);
 }
 
-function sendWhatsApp() {
+function sendWhatsApp(total) {
   let msg = "🧾 *Pedido Miraflor*%0A";
   msg += "Nombre: " + name.value + "%0A";
   msg += "Tel: " + phone.value + "%0A";
@@ -178,7 +179,7 @@ function sendWhatsApp() {
   if (delivery.value === "Envío") msg += "Dirección: " + address.value + "%0A";
   msg += "%0A";
   for (let k in cart) msg += `${cart[k].q} x ${k}%0A`;
-  msg += `%0ATotal: $${cart.total}%0A%0A`;
+  msg += `%0ATotal: $${total}%0A%0A`;
   msg += "Gracias por tu pedido 🙌 En breve te respondemos.";
 
   window.open("https://wa.me/5493406519939?text=" + msg, "_blank");
