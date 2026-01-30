@@ -1,82 +1,95 @@
 <script>
 const products = [
-{name:"Fideos 500g", price:1500},
-{name:"Empanadas 300g", price:1000},
-{name:"Empanadas 400g", price:1200},
-{name:"Rotiseros", price:1300},
-{name:"Árabes", price:1500},
-{name:"Copetín", price:1400},
-{name:"Tartas 300g", price:1100},
-{name:"Tartas 400g", price:1300},
-{name:"Pastelitos 8x8", price:1200},
-{name:"Pastelon 10x10", price:1500}
+  {name:"Fideos 500g", price:1500},
+  {name:"Empanadas 300g", price:1000},
+  {name:"Empanadas 400g", price:1200},
+  {name:"Rotiseros", price:1300},
+  {name:"Árabes", price:1500},
+  {name:"Copetín", price:1400},
+  {name:"Tartas 300g", price:1100},
+  {name:"Tartas 400g", price:1300},
+  {name:"Pastelitos 8x8", price:1200},
+  {name:"Pastelon 10x10", price:1500}
 ];
 
 let cart = {};
 
-function renderProducts(){
-let html="";
-products.forEach((p,i)=>{
-html+=`
-<div class="product">
-  <div>
-    <b>${p.name}</b><br>$${p.price}
-  </div>
-  <div>
-    <input type="number" min="1" value="1" id="qty${i}" style="width:60px;">
-    <button onclick="add('${p.name}',${p.price}, document.getElementById('qty${i}').value)">
-      Agregar
-    </button>
-  </div>
-</div>`;
-});
-document.getElementById("products").innerHTML=html;
+function renderProducts() {
+  let html = "";
+  products.forEach((p, i) => {
+    html += `
+      <div class="product">
+        <div>
+          <b>${p.name}</b><br>$${p.price}
+        </div>
+        <div>
+          <input type="number" id="qty${i}" value="1" min="1" style="width:60px;">
+          <button onclick="addToCart(${i})">Agregar</button>
+        </div>
+      </div>
+    `;
+  });
+  document.getElementById("products").innerHTML = html;
 }
 
-function add(name,price,qty){
-qty = parseInt(qty);
-if(!cart[name]) cart[name]={qty:0,price};
-cart[name].qty += qty;
-renderCart();
+function addToCart(index) {
+  const product = products[index];
+  const qty = parseInt(document.getElementById("qty" + index).value);
+
+  if (!cart[product.name]) {
+    cart[product.name] = { qty: 0, price: product.price };
+  }
+
+  cart[product.name].qty += qty;
+  renderCart();
 }
 
-function renderCart(){
-let html="";
-let total=0, units=0;
-for(let i in cart){
-html+=`${cart[i].qty} x ${i} - $${cart[i].qty*cart[i].price}<br>`;
-total+=cart[i].qty*cart[i].price;
-units+=cart[i].qty;
-}
-html+=`<hr><b>Total: $${total}</b>`;
-document.getElementById("cartItems").innerHTML=html;
-cart.units=units;
-cart.total=total;
-}
+function renderCart() {
+  let html = "";
+  let total = 0;
+  let units = 0;
 
-function toggleAddress(){
-document.getElementById("addressBox").style.display =
-document.getElementById("delivery").value==="Envío" ? "block":"none";
-}
+  for (let name in cart) {
+    const item = cart[name];
+    html += `${item.qty} x ${name} - $${item.qty * item.price}<br>`;
+    total += item.qty * item.price;
+    units += item.qty;
+  }
 
-function sendWhatsApp(){
-if(cart.units < 10 && document.getElementById("delivery").value==="Envío"){
-alert("El envío es a partir de 10 unidades");
-return;
+  html += `<hr><b>Total: $${total}</b>`;
+  document.getElementById("cartItems").innerHTML = html;
+
+  cart.total = total;
+  cart.units = units;
 }
 
-let msg="🧾 *Nuevo pedido*%0A";
-msg+="Nombre: "+name.value+"%0A";
-msg+="Tel: "+phone.value+"%0A%0A";
-msg+="Entrega: "+delivery.value+"%0A";
-if(delivery.value==="Envío") msg+="Dirección: "+address.value+"%0A%0A";
-
-for(let i in cart){
-msg+=`${cart[i].qty} x ${i}%0A`;
+function toggleAddress() {
+  document.getElementById("addressBox").style.display =
+    document.getElementById("delivery").value === "Envío" ? "block" : "none";
 }
-msg+=`%0ATotal: $${cart.total}`;
 
-window.open(`https://wa.me/5493406519939?text=${msg}`,"_blank");
+function sendWhatsApp() {
+  if (document.getElementById("delivery").value === "Envío" && cart.units < 10) {
+    alert("El envío es a partir de 10 unidades");
+    return;
+  }
+
+  let msg = "🧾 *Nuevo pedido*%0A";
+  msg += "Nombre: " + name.value + "%0A";
+  msg += "Tel: " + phone.value + "%0A%0A";
+  msg += "Entrega: " + delivery.value + "%0A";
+
+  if (delivery.value === "Envío") {
+    msg += "Dirección: " + address.value + "%0A%0A";
+  }
+
+  for (let name in cart) {
+    msg += `${cart[name].qty} x ${name}%0A`;
+  }
+
+  msg += `%0ATotal: $${cart.total}`;
+
+  window.open("https://wa.me/5493406519939?text=" + msg, "_blank");
 }
 
 renderProducts();
