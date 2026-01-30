@@ -6,68 +6,33 @@
 <title>Miraflor Pastas</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background:#f6f6f6;
-  padding:15px;
-}
-
-.logo {
-  text-align:center;
-  margin-bottom:10px;
-}
-.logo img {
-  max-width:180px;
-}
+body { font-family: Arial, sans-serif; background:#f6f6f6; padding:15px; }
+.logo { text-align:center; margin-bottom:10px; }
+.logo img { max-width:180px; }
 
 .product {
-  background:white;
-  padding:10px;
-  margin-bottom:10px;
-  border-radius:8px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  background:white; padding:10px; margin-bottom:10px;
+  border-radius:8px; display:flex;
+  justify-content:space-between; align-items:center;
 }
 
 button {
-  background:#2e7d32;
-  color:white;
-  border:none;
-  padding:6px 10px;
-  border-radius:6px;
-  cursor:pointer;
+  background:#2e7d32; color:white; border:none;
+  padding:6px 10px; border-radius:6px; cursor:pointer;
 }
 
-.remove {
-  background:#c62828;
-  margin-left:8px;
-}
-
-.clear {
-  background:#555;
-  width:100%;
-  margin:10px 0;
-  padding:10px;
-}
-
-.qty {
-  width:60px;
-}
+.remove { background:#c62828; margin-left:8px; }
+.clear { background:#555; width:100%; margin:10px 0; padding:10px; }
+.qty { width:60px; }
 
 #cart {
-  background:white;
-  padding:15px;
-  border-radius:8px;
-  margin-top:20px;
+  background:white; padding:15px;
+  border-radius:8px; margin-top:20px;
 }
 
 .send {
-  background:#1fa855;
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  margin-top:10px;
+  background:#1fa855; width:100%;
+  padding:12px; font-size:18px; margin-top:10px;
 }
 </style>
 </head>
@@ -106,7 +71,7 @@ button {
 <textarea id="address" placeholder="Dirección completa"></textarea>
 </div>
 
-<button class="send" onclick="sendWhatsApp()">Enviar pedido por WhatsApp</button>
+<button class="send" onclick="confirmOrder()">Confirmar pedido</button>
 </div>
 
 <script>
@@ -130,9 +95,7 @@ function renderProducts() {
   products.forEach((p,i)=>{
     html += `
       <div class="product">
-        <div>
-          <b>${p.name}</b><br>$${p.price}
-        </div>
+        <div><b>${p.name}</b><br>$${p.price}</div>
         <div>
           <input class="qty" type="number" min="1" value="1" id="q${i}">
           <button onclick="add(${i})">Agregar</button>
@@ -140,24 +103,19 @@ function renderProducts() {
       </div>
     `;
   });
-  document.getElementById("products").innerHTML = html;
+  productsDiv.innerHTML = html;
 }
 
 function add(i) {
   const p = products[i];
   const q = parseInt(document.getElementById("q"+i).value);
-
-  if (!cart[p.name]) {
-    cart[p.name] = {q:0, price:p.price};
-  }
-
+  if (!cart[p.name]) cart[p.name] = {q:0, price:p.price};
   cart[p.name].q += q;
   renderCart();
 }
 
 function removeItem(name) {
-  if (!cart[name]) return;
-  cart[name].q -= 1;
+  cart[name].q--;
   if (cart[name].q <= 0) delete cart[name];
   renderCart();
 }
@@ -168,57 +126,58 @@ function clearCart() {
 }
 
 function renderCart() {
-  const cartDiv = document.getElementById("cartItems");
-  let html = "";
-  let total = 0;
-  let units = 0;
-
+  let html="", total=0, units=0;
   for (let k in cart) {
     html += `
-      <div style="margin-bottom:6px">
-        ${cart[k].q} x ${k} - $${cart[k].q * cart[k].price}
-        <button class="remove" onclick="removeItem('${k}')">Quitar</button>
-      </div>
+      ${cart[k].q} x ${k} - $${cart[k].q * cart[k].price}
+      <button class="remove" onclick="removeItem('${k}')">Quitar</button><br>
     `;
     total += cart[k].q * cart[k].price;
     units += cart[k].q;
   }
 
-  if (html === "") {
-    cartDiv.innerHTML = "<i>El carrito está vacío</i>";
-  } else {
-    cartDiv.innerHTML = html + `<hr><b>Total: $${total}</b>`;
-  }
+  cartItems.innerHTML = html === "" 
+    ? "<i>El carrito está vacío</i>"
+    : html + `<hr><b>Total: $${total}</b>`;
 
   cart.total = total;
   cart.units = units;
 }
 
 function toggleAddress() {
-  document.getElementById("addressBox").style.display =
-    delivery.value === "Envío" ? "block" : "none";
+  addressBox.style.display = delivery.value === "Envío" ? "block" : "none";
 }
 
-function sendWhatsApp() {
+function confirmOrder() {
   if (delivery.value === "Envío" && cart.units < 10) {
     alert("El envío es a partir de 10 unidades");
     return;
   }
 
+  let resumen = "CONFIRMAR PEDIDO\n\n";
+  for (let k in cart) {
+    resumen += `${cart[k].q} x ${k}\n`;
+  }
+  resumen += `\nTotal: $${cart.total}\n`;
+  resumen += `Entrega: ${delivery.value}\n`;
+
+  if (delivery.value === "Envío") {
+    resumen += `Dirección: ${address.value}\n`;
+  }
+
+  if (confirm(resumen)) {
+    sendWhatsApp();
+  }
+}
+
+function sendWhatsApp() {
   let msg = "🧾 *Pedido Miraflor*%0A";
   msg += "Nombre: " + name.value + "%0A";
   msg += "Tel: " + phone.value + "%0A";
   msg += "Entrega: " + delivery.value + "%0A";
-
-  if (delivery.value === "Envío") {
-    msg += "Dirección: " + address.value + "%0A";
-  }
-
+  if (delivery.value === "Envío") msg += "Dirección: " + address.value + "%0A";
   msg += "%0A";
-  for (let k in cart) {
-    msg += `${cart[k].q} x ${k}%0A`;
-  }
-
+  for (let k in cart) msg += `${cart[k].q} x ${k}%0A`;
   msg += `%0ATotal: $${cart.total}%0A%0A`;
   msg += "Gracias por tu pedido 🙌 En breve te respondemos.";
 
