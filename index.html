@@ -6,34 +6,69 @@
 <title>Miraflor Pastas</title>
 
 <style>
-body { font-family: Arial, sans-serif; background:#f6f6f6; padding:15px; }
-.logo { text-align:center; margin-bottom:10px; }
-.logo img { max-width:180px; }
+body {
+  font-family: Arial, sans-serif;
+  background:#f6f6f6;
+  padding:15px;
+}
+
+.logo {
+  text-align:center;
+  margin-bottom:10px;
+}
+
+.logo img {
+  max-width:180px;
+}
 
 .product {
-  background:white; padding:10px; margin-bottom:10px;
-  border-radius:8px; display:flex;
-  justify-content:space-between; align-items:center;
+  background:white;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
 button {
-  background:#2e7d32; color:white;
-  border:none; padding:6px 10px;
-  border-radius:6px; cursor:pointer;
+  background:#2e7d32;
+  color:white;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
 }
 
-.remove { background:#c62828; margin-left:8px; }
-.clear { background:#555; width:100%; margin:10px 0; padding:10px; }
-.qty { width:60px; }
+.remove {
+  background:#c62828;
+  margin-left:8px;
+}
+
+.clear {
+  background:#555;
+  width:100%;
+  margin:10px 0;
+  padding:10px;
+}
+
+.qty {
+  width:60px;
+}
 
 #cart {
-  background:white; padding:15px;
-  border-radius:8px; margin-top:20px;
+  background:white;
+  padding:15px;
+  border-radius:8px;
+  margin-top:20px;
 }
 
 .send {
-  background:#1fa855; width:100%;
-  padding:12px; font-size:18px; margin-top:10px;
+  background:#1fa855;
+  width:100%;
+  padding:12px;
+  font-size:18px;
+  margin-top:10px;
 }
 </style>
 </head>
@@ -55,7 +90,7 @@ button {
 
 <div id="cart">
 <h3>🛒 Carrito</h3>
-<div id="cartItems">El carrito está vacío</div>
+<div id="cartItems"><i>El carrito está vacío</i></div>
 
 <button class="clear" onclick="clearCart()">Vaciar carrito</button>
 
@@ -96,10 +131,12 @@ function renderProducts() {
   products.forEach((p,i)=>{
     html += `
       <div class="product">
-        <div><b>${p.name}</b><br>$${p.price}</div>
+        <div>
+          <b>${p.name}</b><br>$${p.price}
+        </div>
         <div>
           <input class="qty" type="number" min="1" value="1" id="q${i}">
-          <button onclick="add(${i})">Agregar</button>
+          <button onclick="addProduct(${i})">Agregar</button>
         </div>
       </div>
     `;
@@ -107,10 +144,14 @@ function renderProducts() {
   document.getElementById("products").innerHTML = html;
 }
 
-function add(i) {
+function addProduct(i) {
   const p = products[i];
   const q = parseInt(document.getElementById("q"+i).value);
-  if (!cart[p.name]) cart[p.name] = {q:0, price:p.price};
+
+  if (!cart[p.name]) {
+    cart[p.name] = { q: 0, price: p.price };
+  }
+
   cart[p.name].q += q;
   renderCart();
 }
@@ -127,7 +168,8 @@ function clearCart() {
 }
 
 function renderCart() {
-  let html="", total=0, units=0;
+  let html = "";
+  let total = 0;
 
   for (let k in cart) {
     html += `
@@ -135,40 +177,60 @@ function renderCart() {
       <button class="remove" onclick="removeItem('${k}')">Quitar</button><br>
     `;
     total += cart[k].q * cart[k].price;
-    units += cart[k].q;
   }
 
   document.getElementById("cartItems").innerHTML =
     html === "" ? "<i>El carrito está vacío</i>" : html + `<hr><b>Total: $${total}</b>`;
-
-  return { total, units };
 }
 
 function toggleAddress() {
-  addressBox.style.display = delivery.value === "Envío" ? "block" : "none";
+  document.getElementById("addressBox").style.display =
+    delivery.value === "Envío" ? "block" : "none";
 }
 
 function confirmOrder() {
-  const nameVal = name.value.trim();
-  const phoneVal = phone.value.trim();
-  if (!nameVal || !phoneVal) {
-    alert("Por favor completá nombre y teléfono");
+  if (!name.value.trim() || !phone.value.trim()) {
+    alert("Completá nombre y teléfono");
     return;
   }
 
-  const { total, units } = renderCart();
-
-  if (delivery.value === "Envío" && units < 10) {
-    alert("El envío es a partir de 10 unidades");
+  if (!delivery.value) {
+    alert("Seleccioná Envío o Retiro");
     return;
   }
 
+  let total = 0;
+  let units = 0;
   let resumen = "CONFIRMAR PEDIDO\n\n";
-  for (let k in cart) resumen += `${cart[k].q} x ${k}\n`;
-  resumen += `\nTotal: $${total}\nEntrega: ${delivery.value}\n`;
-  if (delivery.value === "Envío") resumen += `Dirección: ${address.value}\n`;
 
-  if (confirm(resumen)) sendWhatsApp(total);
+  for (let k in cart) {
+    resumen += `${cart[k].q} x ${k}\n`;
+    total += cart[k].q * cart[k].price;
+    units += cart[k].q;
+  }
+
+  if (units === 0) {
+    alert("El carrito está vacío");
+    return;
+  }
+
+  resumen += `\nTotal: $${total}\nEntrega: ${delivery.value}\n`;
+
+  if (delivery.value === "Envío") {
+    if (units < 10) {
+      alert("El envío es a partir de 10 unidades");
+      return;
+    }
+    if (!address.value.trim()) {
+      alert("Completá la dirección");
+      return;
+    }
+    resumen += `Dirección: ${address.value}\n`;
+  }
+
+  if (confirm(resumen)) {
+    sendWhatsApp(total);
+  }
 }
 
 function sendWhatsApp(total) {
@@ -178,7 +240,11 @@ function sendWhatsApp(total) {
   msg += "Entrega: " + delivery.value + "%0A";
   if (delivery.value === "Envío") msg += "Dirección: " + address.value + "%0A";
   msg += "%0A";
-  for (let k in cart) msg += `${cart[k].q} x ${k}%0A`;
+
+  for (let k in cart) {
+    msg += `${cart[k].q} x ${k}%0A`;
+  }
+
   msg += `%0ATotal: $${total}%0A%0A`;
   msg += "Gracias por tu pedido 🙌 En breve te respondemos.";
 
