@@ -6,20 +6,9 @@
 <title>Miraflor Pastas</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background:#f6f6f6;
-  padding:15px;
-}
-
-.logo {
-  text-align:center;
-  margin-bottom:10px;
-}
-
-.logo img {
-  max-width:180px;
-}
+body { font-family: Arial, sans-serif; background:#f6f6f6; padding:15px; }
+.logo { text-align:center; margin-bottom:10px; }
+.logo img { max-width:180px; }
 
 .product {
   background:white;
@@ -40,21 +29,9 @@ button {
   cursor:pointer;
 }
 
-.remove {
-  background:#c62828;
-  margin-left:8px;
-}
-
-.clear {
-  background:#555;
-  width:100%;
-  margin:10px 0;
-  padding:10px;
-}
-
-.qty {
-  width:60px;
-}
+.remove { background:#c62828; margin-left:8px; }
+.clear { background:#555; width:100%; margin:10px 0; padding:10px; }
+.qty { width:60px; }
 
 #cart {
   background:white;
@@ -94,17 +71,17 @@ button {
 
 <button class="clear" onclick="clearCart()">Vaciar carrito</button>
 
-<input id="name" placeholder="Nombre">
-<input id="phone" placeholder="Teléfono">
+<input id="nameInput" placeholder="Nombre">
+<input id="phoneInput" placeholder="Teléfono">
 
-<select id="delivery" onchange="toggleAddress()">
+<select id="deliverySelect" onchange="toggleAddress()">
   <option value="">Entrega</option>
   <option value="Envío">Envío</option>
   <option value="Retiro en fábrica">Retiro en fábrica</option>
 </select>
 
 <div id="addressBox" style="display:none">
-<textarea id="address" placeholder="Dirección completa"></textarea>
+<textarea id="addressInput" placeholder="Dirección completa"></textarea>
 </div>
 
 <button class="send" onclick="confirmOrder()">Confirmar pedido</button>
@@ -131,9 +108,7 @@ function renderProducts() {
   products.forEach((p,i)=>{
     html += `
       <div class="product">
-        <div>
-          <b>${p.name}</b><br>$${p.price}
-        </div>
+        <div><b>${p.name}</b><br>$${p.price}</div>
         <div>
           <input class="qty" type="number" min="1" value="1" id="q${i}">
           <button onclick="addProduct(${i})">Agregar</button>
@@ -148,10 +123,7 @@ function addProduct(i) {
   const p = products[i];
   const q = parseInt(document.getElementById("q"+i).value);
 
-  if (!cart[p.name]) {
-    cart[p.name] = { q: 0, price: p.price };
-  }
-
+  if (!cart[p.name]) cart[p.name] = {q:0, price:p.price};
   cart[p.name].q += q;
   renderCart();
 }
@@ -172,10 +144,8 @@ function renderCart() {
   let total = 0;
 
   for (let k in cart) {
-    html += `
-      ${cart[k].q} x ${k} - $${cart[k].q * cart[k].price}
-      <button class="remove" onclick="removeItem('${k}')">Quitar</button><br>
-    `;
+    html += `${cart[k].q} x ${k} - $${cart[k].q * cart[k].price}
+    <button class="remove" onclick="removeItem('${k}')">Quitar</button><br>`;
     total += cart[k].q * cart[k].price;
   }
 
@@ -184,17 +154,23 @@ function renderCart() {
 }
 
 function toggleAddress() {
+  const delivery = document.getElementById("deliverySelect").value;
   document.getElementById("addressBox").style.display =
-    delivery.value === "Envío" ? "block" : "none";
+    delivery === "Envío" ? "block" : "none";
 }
 
 function confirmOrder() {
-  if (!name.value.trim() || !phone.value.trim()) {
+  const name = document.getElementById("nameInput").value.trim();
+  const phone = document.getElementById("phoneInput").value.trim();
+  const delivery = document.getElementById("deliverySelect").value;
+  const address = document.getElementById("addressInput").value.trim();
+
+  if (!name || !phone) {
     alert("Completá nombre y teléfono");
     return;
   }
 
-  if (!delivery.value) {
+  if (!delivery) {
     alert("Seleccioná Envío o Retiro");
     return;
   }
@@ -214,41 +190,36 @@ function confirmOrder() {
     return;
   }
 
-  resumen += `\nTotal: $${total}\nEntrega: ${delivery.value}\n`;
+  resumen += `\nTotal: $${total}\nEntrega: ${delivery}\n`;
 
-  if (delivery.value === "Envío") {
+  if (delivery === "Envío") {
     if (units < 10) {
       alert("El envío es a partir de 10 unidades");
       return;
     }
-    if (!address.value.trim()) {
+    if (!address) {
       alert("Completá la dirección");
       return;
     }
-    resumen += `Dirección: ${address.value}\n`;
+    resumen += `Dirección: ${address}\n`;
   }
 
   if (confirm(resumen)) {
-    sendWhatsApp(total);
+    let msg = "🧾 *Pedido Miraflor*%0A";
+    msg += "Nombre: " + name + "%0A";
+    msg += "Tel: " + phone + "%0A";
+    msg += "Entrega: " + delivery + "%0A";
+    if (delivery === "Envío") msg += "Dirección: " + address + "%0A";
+    msg += "%0A";
+
+    for (let k in cart) {
+      msg += `${cart[k].q} x ${k}%0A`;
+    }
+
+    msg += `%0ATotal: $${total}%0A%0AGracias por tu pedido 🙌`;
+
+    window.open("https://wa.me/5493406519939?text=" + msg, "_blank");
   }
-}
-
-function sendWhatsApp(total) {
-  let msg = "🧾 *Pedido Miraflor*%0A";
-  msg += "Nombre: " + name.value + "%0A";
-  msg += "Tel: " + phone.value + "%0A";
-  msg += "Entrega: " + delivery.value + "%0A";
-  if (delivery.value === "Envío") msg += "Dirección: " + address.value + "%0A";
-  msg += "%0A";
-
-  for (let k in cart) {
-    msg += `${cart[k].q} x ${k}%0A`;
-  }
-
-  msg += `%0ATotal: $${total}%0A%0A`;
-  msg += "Gracias por tu pedido 🙌 En breve te respondemos.";
-
-  window.open("https://wa.me/5493406519939?text=" + msg, "_blank");
 }
 
 renderProducts();
