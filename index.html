@@ -134,18 +134,27 @@ let cart = {};
 
 function renderProducts(){
 let html="";
-products.forEach(p=>{
-html+=`<div class="product">
-<span>${p.name} - $${p.price}</span>
-<button onclick="add('${p.name}',${p.price})">Agregar</button>
+products.forEach((p,i)=>{
+html+=`
+<div class="product">
+  <div>
+    <b>${p.name}</b><br>$${p.price}
+  </div>
+  <div>
+    <input type="number" min="1" value="1" id="qty${i}" style="width:60px;">
+    <button onclick="add('${p.name}',${p.price}, document.getElementById('qty${i}').value)">
+      Agregar
+    </button>
+  </div>
 </div>`;
 });
 document.getElementById("products").innerHTML=html;
 }
 
-function add(name,price){
+function add(name,price,qty){
+qty = parseInt(qty);
 if(!cart[name]) cart[name]={qty:0,price};
-cart[name].qty++;
+cart[name].qty += qty;
 renderCart();
 }
 
@@ -181,7 +190,6 @@ msg+="Entrega: "+delivery.value+"%0A";
 if(delivery.value==="Envío") msg+="Dirección: "+address.value+"%0A%0A";
 
 for(let i in cart){
-if(i!="units" && i!="total")
 msg+=`${cart[i].qty} x ${i}%0A`;
 }
 msg+=`%0ATotal: $${cart.total}`;
@@ -191,6 +199,3 @@ window.open(`https://wa.me/5493406519939?text=${msg}`,"_blank");
 
 renderProducts();
 </script>
-
-</body>
-</html>
