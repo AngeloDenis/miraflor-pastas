@@ -21,7 +21,7 @@ body {
 }
 
 .product {
-  background:#fff;
+  background:white;
   padding:10px;
   margin-bottom:10px;
   border-radius:8px;
@@ -34,8 +34,21 @@ button {
   background:#2e7d32;
   color:white;
   border:none;
-  padding:8px 12px;
-  border-radius:8px;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.remove {
+  background:#c62828;
+  margin-left:8px;
+}
+
+.clear {
+  background:#555;
+  width:100%;
+  margin:10px 0;
+  padding:10px;
 }
 
 .qty {
@@ -54,6 +67,7 @@ button {
   width:100%;
   padding:12px;
   font-size:18px;
+  margin-top:10px;
 }
 </style>
 </head>
@@ -75,7 +89,9 @@ button {
 
 <div id="cart">
 <h3>🛒 Carrito</h3>
-<div id="cartItems"></div>
+<div id="cartItems">El carrito está vacío</div>
+
+<button class="clear" onclick="clearCart()">Vaciar carrito</button>
 
 <input id="name" placeholder="Nombre">
 <input id="phone" placeholder="Teléfono">
@@ -111,15 +127,18 @@ let cart = {};
 
 function renderProducts() {
   let html = "";
-  products.forEach((p, i) => {
+  products.forEach((p,i)=>{
     html += `
       <div class="product">
-        <div><b>${p.name}</b><br>$${p.price}</div>
+        <div>
+          <b>${p.name}</b><br>$${p.price}
+        </div>
         <div>
           <input class="qty" type="number" min="1" value="1" id="q${i}">
           <button onclick="add(${i})">Agregar</button>
         </div>
-      </div>`;
+      </div>
+    `;
   });
   document.getElementById("products").innerHTML = html;
 }
@@ -128,44 +147,82 @@ function add(i) {
   const p = products[i];
   const q = parseInt(document.getElementById("q"+i).value);
 
-  if (!cart[p.name]) cart[p.name] = {q:0, price:p.price};
+  if (!cart[p.name]) {
+    cart[p.name] = {q:0, price:p.price};
+  }
+
   cart[p.name].q += q;
   renderCart();
 }
 
+function removeItem(name) {
+  if (!cart[name]) return;
+  cart[name].q -= 1;
+  if (cart[name].q <= 0) delete cart[name];
+  renderCart();
+}
+
+function clearCart() {
+  cart = {};
+  renderCart();
+}
+
 function renderCart() {
-  let html="", total=0, units=0;
+  const cartDiv = document.getElementById("cartItems");
+  let html = "";
+  let total = 0;
+  let units = 0;
+
   for (let k in cart) {
-    html += `${cart[k].q} x ${k} - $${cart[k].q * cart[k].price}<br>`;
+    html += `
+      <div style="margin-bottom:6px">
+        ${cart[k].q} x ${k} - $${cart[k].q * cart[k].price}
+        <button class="remove" onclick="removeItem('${k}')">Quitar</button>
+      </div>
+    `;
     total += cart[k].q * cart[k].price;
     units += cart[k].q;
   }
-  html += `<hr><b>Total: $${total}</b>`;
-  document.getElementById("cartItems").innerHTML = html;
+
+  if (html === "") {
+    cartDiv.innerHTML = "<i>El carrito está vacío</i>";
+  } else {
+    cartDiv.innerHTML = html + `<hr><b>Total: $${total}</b>`;
+  }
+
   cart.total = total;
   cart.units = units;
 }
 
 function toggleAddress() {
-  addressBox.style.display = delivery.value === "Envío" ? "block" : "none";
+  document.getElementById("addressBox").style.display =
+    delivery.value === "Envío" ? "block" : "none";
 }
 
 function sendWhatsApp() {
   if (delivery.value === "Envío" && cart.units < 10) {
-    alert("Envíos a partir de 10 unidades");
+    alert("El envío es a partir de 10 unidades");
     return;
   }
 
-  let msg = "🧾 Pedido Miraflor%0A";
-  msg += "Nombre: "+name.value+"%0A";
-  msg += "Tel: "+phone.value+"%0A";
-  msg += "Entrega: "+delivery.value+"%0A";
-  if (delivery.value === "Envío") msg += "Dirección: "+address.value+"%0A";
+  let msg = "🧾 *Pedido Miraflor*%0A";
+  msg += "Nombre: " + name.value + "%0A";
+  msg += "Tel: " + phone.value + "%0A";
+  msg += "Entrega: " + delivery.value + "%0A";
 
-  for (let k in cart) msg += `${cart[k].q} x ${k}%0A`;
-  msg += "Total: $"+cart.total;
+  if (delivery.value === "Envío") {
+    msg += "Dirección: " + address.value + "%0A";
+  }
 
-  window.open("https://wa.me/5493406519939?text="+msg);
+  msg += "%0A";
+  for (let k in cart) {
+    msg += `${cart[k].q} x ${k}%0A`;
+  }
+
+  msg += `%0ATotal: $${cart.total}%0A%0A`;
+  msg += "Gracias por tu pedido 🙌 En breve te respondemos.";
+
+  window.open("https://wa.me/5493406519939?text=" + msg, "_blank");
 }
 
 renderProducts();
